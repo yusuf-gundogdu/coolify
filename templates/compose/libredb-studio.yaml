@@ -1,0 +1,35 @@
+# documentation: https://github.com/libredb/libredb-studio
+# slogan: Self-hosted SQL IDE in the browser, with eighteen drivers reaching forty-six engines.
+# category: database
+# tags: database,sql,ide,developer-tools,self-hosted
+# logo: svgs/libredb-studio.svg
+# port: 3000
+
+services:
+  libredb-studio:
+    image: 'ghcr.io/libredb/libredb-studio:0.17.0'
+    environment:
+      - SERVICE_URL_LIBREDBSTUDIO_3000
+      - 'ADMIN_EMAIL=${ADMIN_EMAIL:-admin@libredb.org}'
+      - 'ADMIN_PASSWORD=${SERVICE_PASSWORD_ADMIN}'
+      - 'USER_EMAIL=${USER_EMAIL:-user@libredb.org}'
+      - 'USER_PASSWORD=${SERVICE_PASSWORD_USER}'
+      - 'JWT_SECRET=${SERVICE_PASSWORD_64_JWT}'
+      - 'AUTH_COOKIE_SECURE=${AUTH_COOKIE_SECURE:-false}'
+      - STORAGE_PROVIDER=sqlite
+      - STORAGE_SQLITE_PATH=/app/data/libredb-storage.db
+    volumes:
+      - 'libredb-studio-data:/app/data'
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - '-e'
+        - "fetch('http://127.0.0.1:3000/api/db/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+volumes:
+  libredb-studio-data:
