@@ -1,0 +1,33 @@
+# documentation: https://libredb.org
+# slogan: Open-source database IDE you use from a browser, with twenty-seven engines including PostgreSQL, MySQL, Oracle, SQL Server, MongoDB and Redis.
+# category: database
+# tags: database,sql,ide,developer-tools,postgresql,mysql,mongodb,self-hosted
+# logo: svgs/libredb-studio.svg
+# port: 3000
+
+services:
+  libredb-studio:
+    image: ghcr.io/libredb/libredb-studio:0.18.2
+    environment:
+      - SERVICE_URL_LIBREDBSTUDIO_3000
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@libredb.org}
+      - ADMIN_PASSWORD=${SERVICE_PASSWORD_ADMIN}
+      - USER_EMAIL=${USER_EMAIL:-user@libredb.org}
+      - USER_PASSWORD=${SERVICE_PASSWORD_USER}
+      - JWT_SECRET=${SERVICE_PASSWORD_64_JWT}
+      - STORAGE_PROVIDER=sqlite
+      - STORAGE_SQLITE_PATH=/app/data/libredb-storage.db
+      # Coolify's sslip.io address has no TLS; the app marks the cookie Secure on any
+      # non-loopback host, so login loops. Cleartext while false, true once HTTPS is up.
+      - AUTH_COOKIE_SECURE=${AUTH_COOKIE_SECURE:-false}
+      # Both passwords only seed an empty store. To change the admin one set it with this
+      # flag, sign in once, then drop the flag; it clears passkeys. Change the rest in the app.
+      - ADMIN_PASSWORD_RESET=${ADMIN_PASSWORD_RESET:-}
+    volumes:
+      - libredb-data:/app/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/db/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
